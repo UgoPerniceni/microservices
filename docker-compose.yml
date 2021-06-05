@@ -1,9 +1,5 @@
 version: '3.8'
 
-networks:
-  microservices:
-    driver: bridge
-
 services:
   postgresql:
     image: postgres
@@ -72,18 +68,24 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.13.1
     container_name: elasticsearch
     environment:
-      - cluster.name=docker-cluster
+      - node.name=elasticsearch
+      - cluster.name=es-docker-cluster
+      - cluster.initial_master_nodes=elasticsearch
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ulimits:
       memlock:
         soft: -1
         hard: -1
+    volumes:
+      - data01:/usr/share/elasticsearch/data
     ports:
-      - "9200:9200"
+      - 9200:9200
+    networks:
+      - elastic
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:6.3.2
+    image: docker.elastic.co/kibana/kibana:7.13.1
     container_name: kibana
     ports:
       - "5601:5601"
@@ -103,3 +105,11 @@ volumes:
   postgres_data: {}
   grafana_data: {}
   prometheus_data: {}
+  data01:
+    driver: local
+
+networks:
+  elastic:
+    driver: bridge
+  microservices:
+    driver: bridge
