@@ -1,9 +1,13 @@
 version: '3.8'
 
+networks:
+  microservices:
+    driver: bridge
+
 services:
-  db:
+  postgresql:
     image: postgres
-    container_name: microservices-postgres
+    container_name: postgres
     volumes:
       - postgres_data:/var/lib/postgresql
     environment:
@@ -14,7 +18,7 @@ services:
 
   grafana:
     image: grafana/grafana:7.5.0
-    container_name: microservices-grafana
+    container_name: grafana
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
@@ -24,7 +28,7 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.17.1
-    container_name: microservices-prometheus
+    container_name: prometheus
     volumes:
       - ./prometheus:/etc/prometheus
       - prometheus_data:/prometheus
@@ -34,13 +38,68 @@ services:
       - '--storage.tsdb.retention=31d'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
-    restart: unless-stopped
     expose:
       - 9090
     labels:
       org.label-schema.group: "monitoring"
 
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    container_name: zookeeper
+    networks:
+      - microservices
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka:
+    image: bitnami/kafka:latest
+    container_name: kafka
+    networks:
+      - microservices
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://10.5.0.1:9092
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.13.1
+    container_name: elasticsearch
+    environment:
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:6.3.2
+    container_name: kibana
+    ports:
+      - "5601:5601"
+
+  java:
+    container_name: spring-boot
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/app
+    depends_on:
+      - postgresql
+
 volumes:
+  data: {}
   postgres_data: {}
   grafana_data: {}
   prometheus_data: {}
