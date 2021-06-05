@@ -23,21 +23,15 @@ services:
     user: "472"
 
   prometheus:
-    image: prom/prometheus:v2.17.1
+    image: prom/prometheus:v2.26.0
     container_name: prometheus
+    user: root
+    ports:
+      - 9090:9090
     volumes:
-      - ./prometheus:/etc/prometheus
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention=31d'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-    expose:
-      - 9090
-    labels:
-      org.label-schema.group: "monitoring"
+      - /prometheus-data/prometheus.yml:/etc/prometheus/prometheus.yaml
+      - /data/prometheus:/prometheus
+    command: --web.enable-lifecycle --config.file=/etc/prometheus/prometheus.yml
 
   zookeeper:
     image: bitnami/zookeeper:latest
@@ -99,6 +93,8 @@ services:
       - ./:/app
     depends_on:
       - postgresql
+    ports:
+    - 4012:4012
 
 volumes:
   data: {}
