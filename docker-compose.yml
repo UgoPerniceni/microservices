@@ -3,13 +3,44 @@ version: '3.8'
 services:
   db:
     image: postgres
+    container_name: microservices-postgres
     volumes:
-      - data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - 5432:5432
+      - 5430:5432
+
+  grafana:
+    image: grafana/grafana:7.5.0
+    container_name: microservices-grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - 3000:3000
+    user: "472"
+
+  prometheus:
+    image: prom/prometheus:v2.17.1
+    container_name: microservices-prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention=31d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    restart: unless-stopped
+    expose:
+      - 9090
+    labels:
+      org.label-schema.group: "monitoring"
 
 volumes:
-  data: {}
+  postgres_data: {}
+  grafana_data: {}
+  prometheus_data: {}
