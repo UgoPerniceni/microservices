@@ -96,6 +96,15 @@ services:
     ports:
     - 4012:4012
 
+  consul:
+    image: consul
+    container_name: "consul"
+    hostname: "consul"
+    ports:
+      - "8500:8500"
+    volumes:
+      - ./consul/config.json:/consul/config/consul.json
+
 volumes:
   data: {}
   postgres_data: {}
