@@ -15,7 +15,9 @@
     <packaging>pom</packaging>
     <description>Demo project for Spring Boot</description>
     <modules>
-        <module>registry</module>
+        <module>market</module>
+        <module>education</module>
+        <module>membership</module>
     </modules>
     <properties>
         <java.version>11</java.version>
