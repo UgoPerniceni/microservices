@@ -6,7 +6,7 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.*;
 import java.time.LocalDate;
 
-@Entity
+@Entity(name = "member")
 public class MemberEntity {
 
     @Id
