@@ -18,6 +18,7 @@
         <module>market</module>
         <module>education</module>
         <module>membership</module>
+        <module>kafka</module>
     </modules>
     <properties>
         <java.version>11</java.version>
